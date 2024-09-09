@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Image Metadata Editor</title>
+  <link id="favicon" rel="icon" type="image/x-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAL0SURBVDhPtZNfSFNRHMe/2929m9t1Tudymumcc1bWQyZCSpaBCWIqgnspfcmHgh6ioKfsobeEXnpIg+ghAtGyByNB9MF/EJkPKigT1Dmnc+7un/u/u7vd7l0mVERPfeBw+B3O98v5nt85+G88uN2rECbqR/V3JEdzhtZLV9V3my03k7FIQ05untnqdiRoktyNBgPT5lJzwaJ9k3P43KMvht+sHUl+MaBXB8feIZls94cCoBUqYUkCnU4Lf8AHVZYKm24n9mN+2+Sn91feLn1ziKJjg8WXH57p9UWP1CkJVCoVJIQMiXAUnlQMNAgsWVfgCoew6Xcir8rwWl9W+rSzvcMhFcVjT55fK9bk35OlgUgsBgkvQYJN4MDDgEzxkKR56DUFMOYVgoiSKCmv6KWVygZRK73V0XOhrNA0mEVQSsa9j9XADoJeH0KMD242iHSSBZ9MQSGXY2F9BzYmjnAwDp/Pny0aECvW5cid613VlEJ2/quPwQGnhffAhiAbwqzXhi2vE+W5BciSkSAVJAiTHgZzETguaQyHwxOEYML21LfUqIz05ZLyk5BSOpiaz+LExQq49hRCJDXOaeWg0lKw8jQK68woNZxCpblSR1Ikm7kDz+HheiKSRFFuFmrrteCRgpySo7HBjGqDGjkyJXYDXtB1Z6DWqCGTyZCdTUOr1RoyBmtu+yTHcLblhS24QuFMXjYhZE/7QdAhMFE/FPUmGKoqYSwrE1qrQ5LjIETwiBEwtfwlVJpfvEWZCtqKTUYqX9ggtlKZp0UoGkE6m0RlXS3A87BardBoNLDb7Z6+vr6Hov6Ymbm5zxsbG/zU1JRvz7kX5ziOPwwc8rF4nHe5XNz4+Pj8xMTELsuy/MfR0QFRk4nwk/nZ+QGGYfxDQ0P3b7S2dm5vb8fUOWo4dnacnZ2WtpaWliaeT8/GhLciJaTkkewPzMIQPxIGB189Fo7Kz8xMLwplJm6XxXJ6eGR4pL//WZNY/xOLxdLY3d1dc1T+BvAd/0w7pD7OdiEAAAAASUVORK5CYII=">
+  <style>
+    :root { --link:#4dabf7; --error:#dc3545; --databg:#1A1B26; --datatxt:#c1c5c1; --string:#9ece6a; --key:#bb9af7; --number:#ff9e64; --boolean:#61aeee; --null:#e06c75;}
+    :root { --bg:#F4F4F4; --vltheme:#3e3a3e; --ltheme:#dddbd6; --theme:#e2dfd8; --dtheme:#ebe8e1; --vdtheme:#f1f0e4; }
+    .dark-theme { --bg:#121212; --vltheme:#c1c5c1; --ltheme:#2C2E33; --theme:#373A40; --dtheme:#25262b; --vdtheme:#1A1B26; }
+    body { font-family: Arial, sans-serif; background-color:var(--bg); color: var(--vltheme); margin:0; }
+    .body-content { margin:10px; }
+    #dropArea { width: 100%; border: 2px dashed var(--theme); text-align: center; padding: 30px 0; margin-bottom: 20px; background-color: var(--dtheme); border-radius: 20px; }
+    #dropArea.hover { background-color: var(--ltheme); }
+    .collapsible { cursor: pointer; user-select: none; margin-bottom: 5px; }
+    .collapsible:hover { background-color: var(--vdtheme); border-radius: 10px; }
+    .collapsible-caret::before { content: "▼ "; display: inline-block; width: 1em; }
+    .collapsible-caret.active::before { content: "▲ "; }
+    .content { display: none; padding: 5px; position: relative; }
+    .header, #settings-btn { margin:20px; font-size: 2em; font-weight: bold; }
+    #settings-panel { padding: 10px; border-bottom: 1px solid var(--theme); }
+    #settings-btn { position: absolute; top: 0; right: 0; }
+    .footer { margin:10px; text-align: center; font-size: 0.9em; }
+    #notificationPanel { text-align: center; color:var(--error); font-weight: bold; }
+    a { color: var(--link); font-weight: bold; }
+    input, textarea, select { font-family: monospace; color: var(--vltheme); background-color: var(--ltheme); border-radius: 10px;  }
+    input { padding:5px; }
+    textarea { width: 100%; }
+    select { font-size: 1.3em; padding: 5px;}
+    hr { border: none; border-bottom: 1px solid var(--theme); }
+    input[type=checkbox] { margin: 10px;}
+    pre { margin: 0; }
+    button { font-size: 1.1em; color: var(--vltheme); background-color: var(--ltheme); border: none; border-radius: 10px; padding:8px; }
+    button:hover { background-color: var(--theme); }
+    /* https://svgicons.sparkk.fr */
+    .svg-icon { width: 1em; height: 1em;}
+    .svg-icon-lg { width: 3em; height: 3em;}
+    .svg-icon path, .svg-icon polygon, .svg-icon rect { fill: var(--vltheme); }
+    .svg-icon circle { stroke: var(--vltheme); stroke-width: 1; }
+    .summary-table td { border-bottom: 1px solid var(--theme); width: 100%; }
+    .summary-table tr td:first-child, .key { font-weight: bold; width: auto; white-space: nowrap; padding-right: 20px; }
+    .section-header { font-size: 1.2em; font-weight: bold;}
+    .notes { font-style: italic; font-size: 0.8em; }
+    .main-container div { margin: 5px;}
+    .main-container div:first-child { flex:1; }
+    .main-container div:nth-child(2) { flex:2; }
+    doro-doro { position: absolute; margin: -15px 0 0 10px; }
+  </style>
+</head>
+<body class="dark-theme">
+  
+  <div class="header">
+    <span class="boom">AI Image Metadata Editor </span>
+    <doro-doro></doro-doro>
+  </div>
+  <hr/>
+
+  <span id="settings-btn" class="collapsible boom" data-target="settings-panel">⚙</span>
+  <div id="settings-panel">
+    <div class="section-header boom">Display Settings</div>
+    <div><input type="checkbox" id="darkMode" class="settings-field" checked><label for="darkMode">Dark Mode</label></div>
+    <hr>
+    <div class="section-header boom">LoRA Settings</div>
+    <div><input type="checkbox" id="appendLoraToPrompt" class="settings-field" checked><label for="appendLoraToPrompt">Append LoRA to prompt</label></div>
+    <div>
+      <label for="hashMethod">Safetensors hashing method: </label>
+      <select id="hashMethod" class="settings-field">
+        <option value="metadata" selected>Retrieve AutoV3 hash from Metadata</option>
+        <option value="autov3">Calculate AutoV3 hash</option>
+        <option value="autov2">Calculate AutoV2 hash</option>
+      </select>
+    </div><br>
+    <hr>
+    <button id="clearSettingsBtn" class="settings-button">Restore Default Settings</button>
+  </div>
+  <div class="body-content">
+    <div id="dropArea" class="drop-area boom">
+      <p>Drag and drop an image or safetensors file here </br>or click to select a file</p>
+      <div>
+        <svg class="svg-icon svg-icon-lg" viewBox="0 0 20 20">
+          <path fill="none" d="M8.416,3.943l1.12-1.12v9.031c0,0.257,0.208,0.464,0.464,0.464c0.256,0,0.464-0.207,0.464-0.464V2.823l1.12,1.12c0.182,0.182,0.476,0.182,0.656,0c0.182-0.181,0.182-0.475,0-0.656l-1.744-1.745c-0.018-0.081-0.048-0.16-0.112-0.224C10.279,1.214,10.137,1.177,10,1.194c-0.137-0.017-0.279,0.02-0.384,0.125C9.551,1.384,9.518,1.465,9.499,1.548L7.76,3.288c-0.182,0.181-0.182,0.475,0,0.656C7.941,4.125,8.234,4.125,8.416,3.943z M15.569,6.286h-2.32v0.928h2.32c0.512,0,0.928,0.416,0.928,0.928v8.817c0,0.513-0.416,0.929-0.928,0.929H4.432c-0.513,0-0.928-0.416-0.928-0.929V8.142c0-0.513,0.416-0.928,0.928-0.928h2.32V6.286h-2.32c-1.025,0-1.856,0.831-1.856,1.856v8.817c0,1.025,0.832,1.856,1.856,1.856h11.138c1.024,0,1.855-0.831,1.855-1.856V8.142C17.425,7.117,16.594,6.286,15.569,6.286z"></path>
+        </svg>      
+      </div>
+    </div>
+
+    <div id="notificationPanel"></div>
+
+    <div  style="text-align: center;">
+      <button id="btnClear">Clear</button>
+      <select id="loadMode">
+        <option value="all" selected>Load Image & Metadata</option>
+        <option value="image">Load Image only</option>
+        <option value="metadata">Load Metadata only</option>
+      </select>
+      <button id="btnDownload">Download</button>
+    </div>
+
+    <div class="main-container" style="display: flex; flex-direction: row;">
+      <div>
+          <img id="previewImage" src="" alt="Image Preview" class="boom" style="max-width: 100%; display: none; ">
+      </div>
+      <div>
+        <div>
+          <label for="metadataPrompt"><span class="section-header" >Prompt</label>
+          <textarea id="metadataPrompt" rows="10" spellcheck="false"></textarea>
+        </div>
+        <hr>
+        <div>
+          <label for="metadataNegative"><span class="section-header" >Negative</span></label>
+          <textarea id="metadataNegative" rows="10" spellcheck="false"></textarea>
+        </div>
+        <hr>
+        <div>
+          <label for="metadataEditor"><span class="section-header collapsible collapsible-caret expanded" data-target="summaryTable">Params</span></label>
+          <span style="float: right;">
+            <label for="editorFormat"><b>Layout: </b></label>
+            <select id="editorFormat" class="settings-field" data-select-toggle>
+              <option value="manual">Manual</option>
+              <option value="simple">Simple</option>
+            </select>
+          </span>
+          <div data-toggle-target="editorFormat" data-toggle-value="manual">
+            <span class="notes boom">Warning: Manually editing this section may cause errors if done incorrectly.</span>
+            <textarea id="metadataEditor" rows="10" spellcheck="false" ></textarea>
+          </div>
+          <div class="summary-table" data-toggle-target="editorFormat" data-toggle-value="simple">
+            <table>
+              <tbody id="metadataEditorSimple">
+                <tr><td><label for="editor_Steps">Steps: </label></td><td><input type="number" id="editor_Steps" name="Steps" min="0"></td></tr>
+                <tr>
+                  <td><label for="editor_Sampler">Sampler: </label></td>
+                  <td>
+                    <input type="text" id="editor_Sampler" name="Sampler"  list="samplers">
+                    <datalist id="samplers">
+                      <option value="Euler">Euler</option>
+                      <option>Euler A</option>
+                      <option>LMS</option>
+                      <option>Heun</option>
+                      <option>DPM2</option>
+                      <option>DPM2 a</option>
+                      <option>DPM++ 2S a</option>
+                      <option>DPM++ 2M</option>
+                      <option>DPM++ SDE</option>
+                      <option>DPM++ 2M SDE</option>
+                      <option>DPM++ 3M SDE</option>
+                      <option>DPM fast</option>
+                      <option>DPM adaptive</option>
+                      <option>LMS Karras</option>
+                      <option>DPM2 Karras</option>
+                      <option>DPM2 a Karras</option>
+                      <option>DPM++ 2S a Karras</option>
+                      <option>DPM++ 2M Karras</option>
+                      <option>DPM++ SDE Karras</option>
+                      <option>DPM++ 2M SDE Karras</option>
+                      <option>DPM++ 3M SDE Karras</option>
+                      <option>DPM++ 3M SDE Exponential</option>
+                      <option>DDIM</option>
+                      <option>PLMS</option>
+                      <option>UniPC</option>
+                      <option>LCM</option>
+                    </datalist>
+                  </td>
+                </tr>
+                <tr><td><label for="editor_CFG_scale">CFG scale: </label></td><td><input type="number" id="editor_CFG_scale" name="CFG scale" step="1" min="0"></td></tr>
+                <tr><td><label for="editor_Seed">Seed: </label></td><td><input type="number" id="editor_Seed" name="Seed" step="1" min="0"></td></tr>
+                <tr><td><label for="editor_Model_hash">Model hash: </label></td><td><input type="text" id="editor_Model_hash" name="Model hash"></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="summaryTable" data-toggle-target="summaryFormat" data-toggle-value="table" class="summary-table">No data to display...</div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  <hr/>
+  <div class="footer">
+    <span class="boom">AI Image Metadata Editor v1.0 |</span>
+    <a href="https://github.com/Xypher7/ai-image-metadata-editor" target='_blank'>GitHub</a> <span class="boom">|</span>
+    <a href="https://civitai.com/models/661484" target='_blank'>CivitAI</a>
+  </div>
+  <script src="https://xypher7.github.io/Doro.js/doro.js"></script>
+  <script> 
+    //#region Gobal Variables
+    let imageFile;
+    const defaults = {};
+
+    const dropArea = document.getElementById('dropArea');
+    const notificationPanel = document.getElementById('notificationPanel');
+    const darkMode = document.getElementById('darkMode');
+    const appendLoraToPrompt = document.getElementById('appendLoraToPrompt');
+    const hashMethod = document.getElementById('hashMethod');
+    const loadMode = document.getElementById('loadMode');
+    const btnDownload = document.getElementById('btnDownload');
+    const btnClear = document.getElementById('btnClear');
+    const previewImage = document.getElementById('previewImage');
+    const metadataPrompt = document.getElementById('metadataPrompt');
+    const metadataNegative = document.getElementById('metadataNegative');
+    const metadataEditor = document.getElementById('metadataEditor');
+    const metadataEditorSimple = document.getElementById('metadataEditorSimple');
+    const metadataEditorFields = metadataEditorSimple.querySelectorAll('input');
+    const clearSettingsBtn = document.getElementById('clearSettingsBtn');
+    const summaryTable = document.getElementById('summaryTable');
+    const editorFormat = document.getElementById('editorFormat');
+    
+    const negativePrefix = 'Negative prompt: ';
+    const paramsPrefix = 'Steps: ';
+
+    //#endregion Global Variables
+    //#region Initialization 
+    init();
+
+    function init(){   
+      initDropArea();
+      initSelectToggle();
+      initSettingsStorage();
+      initCollapsible();
+      metadataEditor.addEventListener('change', renderSummary , false);
+      darkMode.addEventListener('click', toggleDarkMode , false);
+      btnDownload.addEventListener('click', downloadFile , false);
+      btnClear.addEventListener('click', clearAll , false);
+      editorFormat.addEventListener('change', updateEditorFields);
+      metadataEditorFields.forEach(input => {
+        input.addEventListener('change', function(event) {
+          metadataEditor.value = updateKeyValueInString(metadataEditor.value, event.target.name, event.target.value);
+          renderSummary();
+        });
+      });
+      if(window.matchMedia && !window.matchMedia('(prefers-color-scheme: dark)').matches) darkMode.checked = !darkMode.checked;
+    }
+
+    function initSelectToggle() {
+      document.querySelectorAll('select[data-select-toggle]').forEach(select => {
+          select.addEventListener('change', () => {
+              document.querySelectorAll(`[data-toggle-target="${select.id}"]`).forEach(element => {
+                  element.style.display = select.value === element.getAttribute('data-toggle-value') ? 'block' : 'none';
+              });
+          });
+          select.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));    
+      });
+    }
+
+    function initCollapsible(){
+      document.querySelectorAll('.collapsible').forEach((collapsible, i) => {
+        collapsible.addEventListener('click', function () {
+          this.classList.toggle('active');
+          const targetSelector = this.getAttribute('data-target');
+          const content = document.getElementById(targetSelector);
+          if (content.style.display === 'block') {
+            content.style.display = 'none';
+          } else {
+            content.style.display = 'block';
+          }
+        });
+        const targetSelector = collapsible.getAttribute('data-target');
+        const content = document.getElementById(targetSelector);
+        content.classList.add('content');
+        if (collapsible.classList.contains('expanded')) collapsible.click();
+      });
+    }
+
+    function initDropArea(){
+      const highlight = () =>{ dropArea.classList.add('hover'); };
+      const unhighlight = () =>{ dropArea.classList.remove('hover'); };
+      const handleDrop = (event) => {
+        handleFile(event.dataTransfer.files[0]);
+        dropArea.classList.remove('hover');
+      }
+      const preventDefaults = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+      // Highlight drop area when a file is dragged over it
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+      });
+      // Remove highlighting when a file is dragged away from the drop area
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+      });
+      dropArea.addEventListener('drop', handleDrop, false);
+      dropArea.addEventListener('mouseover', highlight);
+      dropArea.addEventListener('mouseout', unhighlight);
+      // File input handling
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.style.display = 'none';
+      fileInput.accept = '.png,.jpg,.jpeg,bmp,.webp,.safetensors';
+      document.body.appendChild(fileInput);
+
+      dropArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        handleFile(file);
+      });
+    }
+
+    async function handleFile(file) {
+      notificationPanel.innerHTML = '';
+      if(!file || !(/\.(png|jpg|jpeg|bmp|webp|safetensors)$/i.test(file.name))){
+        notificationPanel.innerHTML = 'Please drop a valid image or safetensors file.';
+        return;
+      }
+      if(file.name.endsWith('.png')){
+        displayPreviewImage(file);
+        const parameters = await getPNGMetadata(file);
+        displayMetadata(parameters);
+      }
+      else if(file.name.endsWith('.safetensors')){
+        addLora(file);
+      }
+      else {
+        displayPreviewImage(file);
+        if((/\.(jpg|jpeg)$/i.test(file.name))) {
+          const parameters = await getJPGMetadata(file);
+          displayMetadata(parameters);
+        }
+      }
+    }
+
+    //Initialize Settings with values stored in browser
+    function initSettingsStorage(){
+      // Unique prefix for the app
+      const appPrefix = 'x_aiie.'; 
+
+      // Retrieve values from local storage and set default values if not present
+      const loadSettings = () => {
+          document.querySelectorAll('.settings-field').forEach(function (element) {
+              const id = element.id ? appPrefix + element.id : null;
+              if (id) {
+                  let value = localStorage.getItem(id);
+                  if (value === null && defaults[element.id] !== undefined) {
+                      value = typeof defaults[element.id] === 'object' ? JSON.stringify(defaults[element.id]) : defaults[element.id];
+                      localStorage.setItem(id, value); // Store default value in local storage
+                  }
+                  if (value !== null) {
+                      if (element.type === 'checkbox') {
+                          element.checked = value === 'true';
+                      } else {
+                          element.value = value;
+                          if(element.getAttribute('data-editable-list') !== null){
+                              const listElem = document.getElementById(element.getAttribute('data-editable-list'));
+                              JSON.parse(value).forEach(obj => {
+                                  addListItem(element.getAttribute('data-editable-list'), listElem.getAttribute('data-list-template'), obj);
+                              })
+                          }
+                          if (element.tagName.toLowerCase() === 'select')
+                              element.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));                       
+                      }
+                      element.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+                  }
+              }
+          });
+          !darkMode.checked && toggleDarkMode();
+      };
+
+      // Save values to local storage
+      const saveSettings = () => {
+          document.querySelectorAll('.settings-field').forEach(function (element) {
+              const id = element.id ? appPrefix + element.id : null;
+              if (id) {
+                  let value = element.type === 'checkbox' ? element.checked : element.value;
+                  if(element.getAttribute('data-editable-list') !== null){
+                      const objectArray = [];
+                      const listElem = document.getElementById(element.getAttribute('data-editable-list'));
+                      listElem.querySelectorAll('.list-item').forEach(listItem => {
+                          const itemObject = {};
+                          listItem.querySelectorAll('[name]').forEach(inputField => {
+                              itemObject[inputField.getAttribute('name')] = inputField.value;
+                          });
+                          objectArray.push(itemObject);
+                      });
+                      value = element.value = JSON.stringify(objectArray);
+                  }
+                  localStorage.setItem(id, value.toString());
+              }
+          });
+      }
+
+      // Load settings when the page is opened
+      window.addEventListener('load', function () {
+          loadSettings();
+          // Save settings when the user changes any input
+          document.querySelectorAll('.settings-field').forEach(function (element) {
+              element.addEventListener('input', saveSettings);
+          });
+      });
+
+      // Clear local storage and reset defaults
+      clearSettingsBtn.addEventListener('click', () => {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key.startsWith(appPrefix)) 
+            localStorage.removeItem(key);
+        }
+        location.reload();
+      });
+    }
+    //#endregion Initialization
+    //#region UI Rendering
+    //Toggle UI between dark and light modes
+    function toggleDarkMode(){
+      document.body.classList.toggle('dark-theme');
+    }
+
+    //Render preview image in UI
+    async function displayPreviewImage(file){
+      if(!['all','image'].includes(loadMode.value)) return;
+      imageFile = file;
+      previewImage.src = '';
+      const objectURL = URL.createObjectURL(file);
+      previewImage.src = objectURL;
+      previewImage.style.display = 'block';
+      replaceImageWithPNG();
+    }
+
+    //Clear UI & Global Variables
+    function clearAll(){
+      notificationPanel.innerHTML = '';
+      previewImage.src = '';
+      previewImage.style.display = 'none';
+      metadataPrompt.value = "";
+      metadataNegative.value = "";
+      metadataEditor.value = "";
+      summaryTable.innerHTML = "";
+      imageFile = null;
+      metadataEditorFields.forEach(input => input.value = '');
+    }
+
+    //Load image metadata into the UI
+    async function displayMetadata(parameters) {
+      //Skip if metadata not selected in load selection
+      if(!['all','metadata'].includes(loadMode.value)) return;
+      metadataPrompt.value = "";
+      metadataNegative.value = "";
+      metadataEditor.value = "";
+      //Fill textareas with metadata sections
+      parameters.forEach((v,i)=> {
+        if(v.startsWith(paramsPrefix) ) 
+          metadataEditor.value = v;
+        else if(v.startsWith(negativePrefix)) 
+          metadataNegative.value = v.substring(negativePrefix.length);
+        else 
+          metadataPrompt.value += v;
+      });
+      updateEditorFields();
+      renderSummary();
+    }
+
+    //Render image metadata in table format
+    function renderSummary(){
+      let extra = parseKeyValuePairs(metadataEditor.value);
+      const rows = Object.entries(extra).map(([key, value]) => {
+        let formattedValue = "";
+        if(key==='Lora hashes'){
+          if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+          value.split(',').forEach(kv => {
+            const v = kv.split.length===2 ? kv.split(":")[1].trim() : null;
+            if(v)
+              formattedValue += `<div><a href='#' onclick='redirectToModel("${v}"); return false;'>${kv}</a></div>`;
+          });
+        } else if(['Model hash','VAE hash'].includes(key) && value){
+          formattedValue += `<div><a href='#' onclick='redirectToModel("${value}"); return false;'>${value}</a></div>`;
+        } else{
+          const dataType = value === null || value === undefined || value === "undefined" ? "null" : typeof value;
+          formattedValue = dataType === 'object' ? `<pre>${JSON.stringify(value, null, 2)}</pre>` : value;
+        }
+        return `<tr><td>${key}</td><td>${formattedValue}</td></tr>`;
+      });
+      summaryTable.innerHTML = `<table>${rows.join('')}</table>`;
+    }
+
+    //Add lora info from Safetensors file to image param metadata
+    async function addLora(file){
+      try{
+        let fileHash;
+        let metadata;
+        if (hashMethod.value === 'metadata') {
+          metadata = await getSafetensorsMetadata(file);
+          fileHash = metadata?.sshs_model_hash?.substring(0,12);
+        } 
+        if(hashMethod.value === 'autov2'){
+          fileHash = await calculateFileHash(file);
+          fileHash = fileHash.substring(0,10);
+        } else if (hashMethod.value === 'autov3' || !fileHash){
+          fileHash = await calculateAutoV3Hash(file);
+          fileHash = fileHash.substring(0,12);
+        } 
+        const loraName = metadata?.ss_output_name || file.name.replace(/(\.[^.]+)$/, '');
+        if(appendLoraToPrompt.checked && !metadataPrompt.value.includes(loraName)) metadataPrompt.value += `<lora:${loraName}:1>`;
+        //Exit if hash already exists
+        if(metadataEditor.value.includes(fileHash)){
+          notificationPanel.innerHTML = 'The hash already exists...';
+          return;
+        }
+        if(!metadataEditor.value) metadataEditor.value = paramsPrefix + '0';
+        metadataEditor.value = appendKeyValueToLoraHashes(metadataEditor.value, loraName, fileHash);
+        renderSummary();
+      }
+      catch {
+        notificationPanel.innerHTML = 'An error occured while retrieving the hash...';
+        console.error(error);
+      }
+    }
+
+    function appendKeyValueToLoraHashes(input, newKey, newValue) {
+        const regex = /Lora hashes:\s*"([^"]*)"/;
+        const match = input.match(regex);
+        if (match) {
+            const loraHashes = `${match[1]}, ${newKey}: ${newValue}`;
+            return input.replace(match[1], loraHashes);
+        } else { // Lora hashes doesn't exist, so add it to the input
+            const newLoraHashSection = `Lora hashes: "${newKey}: ${newValue}"`;
+            return `${input}, ${newLoraHashSection}`; // Append the new Lora hashes section
+        }
+    }
+
+    function getValueFromKey(input, key) {
+        const regex = new RegExp(`${key}\\s*:\\s*([^,]+)`);
+        const match = input.match(regex);
+        return match ? match[1].trim() : null;
+    }
+
+    function updateKeyValueInString(input, key, newValue) {
+        const regex = new RegExp(`(${key}\\s*:\\s*)([^,]+)`);
+        if(!input?.trim()) input = paramsPrefix + '0';
+        if(input.match(regex)) input = input.replace(regex, `$1${newValue}`);
+        else input += `, ${key}: ${newValue}`;
+        if(key.toLowerCase()==='model hash' && !getValueFromKey(input, 'Model')) input = updateKeyValueInString(input, 'Model', newValue);
+        return input;
+    }
+
+    //Render fields for simple Param editor
+    function updateEditorFields() {
+      if(editorFormat.value!=='simple') return;
+      if(!metadataEditor.value) metadataEditorFields.forEach(input => input.value = '');
+      else metadataEditorFields.forEach(input => input.value = getValueFromKey(metadataEditor.value, input.name));
+    }
+    //#endregion UI Rendering
+    //#region Metadata Utilities
+    async function getPNGMetadata(file) {
+      //Get PNG metadata and dump into array
+      const arrayBuffer = await readPNGFile(file);
+      let dataChunks = parseChunks(arrayBuffer);
+      let parameters = [];
+      dataChunks.forEach(chunk => {
+          if (chunk.type === 'tEXt' || chunk.type === 'iTXt' || chunk.type === 'zTXt') {
+              const text = new TextDecoder().decode(chunk.data);
+              const [key, value] = text.split('\0');
+              if (key === "parameters") {
+                if(value.startsWith("{") && value.includes('sui_image_params')){ //SwarmUI metadata
+                  parameters = getSwarmUIMetadata(value);
+                } else //Auto1111 metadata
+                  parameters = value.split(/\r?\n/).filter(Boolean);
+                return;
+              } 
+          }
+      });
+      return parameters;
+    }
+
+    async function getJPGMetadata(file) {
+      //Get JPG metadata and dump into array
+      const userComment = await checkExifUserComment(file);
+      if(!userComment) return [];
+      const parameters = userComment.split(/\r?\n/).filter(Boolean);
+      return parameters;
+    }
+
+    function getSwarmUIMetadata(metadataString){
+      try{
+        const result = [];
+        const md = JSON.parse(metadataString).sui_image_params;
+        result.push(md.prompt);
+        result.push(negativePrefix + md.negativeprompt);
+        const params = `Steps: ${md.steps}, CFG scale: ${md.cfgscale}, Seed: ${md.seed}, Size: ${md.width}x${md.height}, Model: ${md.model}, VAE: ${md.vae}`;
+        result.push(params);
+        return result;
+      }catch{
+        console.warn("Could not parse SwarmUI metadata...")
+      }
+    }
+
+    //Parse key/value pairs in metadata into a JSON object
+    function parseKeyValuePairs(input) {
+        const result = {};
+        let currentKey = '';
+        let currentValue = '';
+        let inQuotes = false;
+        let inBraces = 0;  // Keep track of nested braces
+        let inBrackets = 0; // Keep track of nested brackets
+        let isParsingKey = true;
+        for (let i = 0; i < input.length; i++) {
+            const char = input[i];
+            // Toggle quotes
+            if (char === '"' && input[i - 1] !== '\\') {
+                inQuotes = !inQuotes;
+            } else if (char === '{' && !inQuotes) {
+                inBraces++;
+            } else if (char === '}' && !inQuotes) {
+                inBraces--;
+            } else if (char === '[' && !inQuotes) {
+                inBrackets++;
+            } else if (char === ']' && !inQuotes) {
+                inBrackets--;
+            }
+            // Detect key-value separator (colon)
+            if (char === ':' && isParsingKey && !inQuotes && inBraces === 0 && inBrackets === 0) {
+                isParsingKey = false;
+                continue;
+            }
+            // Detect the end of a key-value pair (comma)
+            if (char === ',' && !inQuotes && inBraces === 0 && inBrackets === 0) {
+                result[currentKey.trim()] = parseValue(currentValue.trim());
+                currentKey = '';
+                currentValue = '';
+                isParsingKey = true;
+                continue;
+            }
+            // Append to key or value depending on parsing state
+            if (isParsingKey) currentKey += char;
+            else currentValue += char;
+        }
+        // Add the last key-value pair
+        if (currentKey) result[currentKey.trim()] = parseValue(currentValue.trim());
+        return result;
+    }
+
+    // Helper function to parse value, handling JSON objects and arrays
+    function parseValue(value) {
+        try { // Try to parse as JSON (to handle arrays or objects)
+          if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) 
+            return JSON.parse(value);
+        } catch (e) {}// If parsing fails, return the value as a string
+        return value;
+    }
+
+    //#endregion Metadata Utilities
+    //#region Lora/Safetensors Utilities
+    //Get metadata from safetensors file
+    function getSafetensorsMetadata(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = function(err) {
+                console.error('File reading error:', err);
+                reject(err);
+            };
+            reader.onload = function (event) {
+                try {
+                    const dataView = new DataView(reader.result);
+                    const metadataSize = dataView.getUint32(0, true);
+                    const metadataBytes = new Uint8Array(reader.result.slice(8, 8 + metadataSize));
+                    const textDecoder = new TextDecoder("utf-8");
+                    const headerStr = textDecoder.decode(metadataBytes);
+                    const header = JSON.parse(headerStr);
+                    let formattedMetadata = header['__metadata__'] || ''; 
+                    resolve(formattedMetadata);
+                } catch (error) {
+                    console.error(error);
+                    reject(error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    //Search model info by hash on CivitAI
+    async function getCivitAiData(hash) {
+        const baseApiUrl = 'https://civitai.com/api/v1/model-versions/by-hash/';
+        const baseModelUrl = 'https://civitai.com/models/';
+        const versionParam = '?modelVersionId=';
+        try {
+            const response = await fetch(`${baseApiUrl}${hash}`);
+            if (!response.ok) {
+                console.log('No valid response found.');
+                return null;
+            }
+            const data = await response.json();
+            return {
+                data,
+                modelUrl: `${baseModelUrl}${data.modelId}${versionParam}${data.id}`
+            };
+        } catch (error) {
+          if (error instanceof TypeError) notificationPanel.innerHTML = "CivitAI lookup failed, possibly due to a CORS restriction or network error...";
+          else console.log('There was a problem:', error);
+        }
+    }
+
+    async function redirectToModel(hash){
+      notificationPanel.innerHTML = "";
+      const civitaiInfo = await getCivitAiData(hash);
+      if(civitaiInfo && civitaiInfo.modelUrl)
+        window.open(civitaiInfo.modelUrl, '_blank');
+      else if(!notificationPanel.innerHTML)
+        notificationPanel.innerHTML = "Model not found on CivitAI...";
+    }
+
+    //#endregion Lora/Safetensors Utilities
+    //#region Encryption Utilities
+    //Calculate SHA-256 hash of the entire file (AutoV2 hash)
+    function calculateFileHash(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const buffer = reader.result;
+          try {
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(byte => ('00' + byte.toString(16)).slice(-2)).join('');
+            resolve(hashHex);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => { reject(new Error('Unable to read the file.')); };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    //Calculate SHA-256 hash of a file, without metadata section (AutoV3 hash)
+    function calculateAutoV3Hash(file) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    try {
+                        const fileBuffer = reader.result;
+                        const dataView = new DataView(fileBuffer);
+                        const n = dataView.getUint32(0, true); // Read the first 8 bytes as an integer in little-endian format                     
+                        const offset = n + 8; // Calculate the offset
+                        const fileBytesToHash = new Uint8Array(fileBuffer, offset); // Extract data from  file starting at calculated offset       
+                        crypto.subtle.digest('SHA-256', fileBytesToHash) // Calculate the SHA-256 hash of the extracted data
+                            .then(hashBuffer => {
+                                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                                const hashHex = hashArray.map(byte => ('00' + byte.toString(16)).slice(-2)).join('');
+                                resolve(hashHex);
+                            })
+                            .catch(err => reject(err));
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Unable to read the file.'));
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    // Precomputed CRC-32 table
+    const crcTable = (() => {
+        let c;
+        const crcTable = [];
+        for (let n = 0; n < 256; n++) {
+            c = n;
+            for (let k = 0; k < 8; k++) {
+                c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+            }
+            crcTable[n] = c;
+        }
+        return crcTable;
+    })();
+
+    function crc32(buf) {
+        let crc = 0 ^ (-1);
+        for (let i = 0; i < buf.length; i++) {
+            crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xFF];
+        }
+        return (crc ^ (-1)) >>> 0;
+    }
+    //#endregion
+    //#region PNG Utilities
+    //Rebuild and download new image file with metadata values from UI
+    async function downloadFile() {
+      try{
+        let metadata = "";
+        if(metadataPrompt.value) metadata += metadataPrompt.value + "\n";
+        if(metadataNegative.value) metadata += `${negativePrefix}${metadataNegative.value}\n`;
+        if(metadataEditor.value) metadata += (!metadataEditor.value.includes(paramsPrefix)? paramsPrefix + '0, ':'') + metadataEditor.value;
+        const newMetadata = { "parameters": metadata };
+        const arrayBuffer = await readPNGFile(imageFile);
+        let imageChunks = parseChunks(arrayBuffer);
+        let chunks = editMetadata(imageChunks, newMetadata);
+        const blob = reconstructPNG(chunks);
+        downloadPNG(blob, imageFile.name.replace(/(\.[^.]+)$/, `_edited$1`));
+      } catch (error) {
+        notificationPanel.innerHTML = "An error occured while updating the file.";
+        console.error(error);
+      }
+    }
+   
+    function readPNGFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function parseChunks(arrayBuffer) {
+        const chunks = [];
+        const view = new DataView(arrayBuffer);
+        let offset = 8; // Skip the PNG signature (8 bytes)
+        while (offset < view.byteLength) {
+            if (offset + 8 > view.byteLength) {
+                console.error(`Invalid offset at ${offset}: not enough data to read length and type`);
+                break;
+            }
+            // Read the chunk length (4 bytes)
+            const length = view.getUint32(offset);
+            const maxChunkSize = 1024 * 1024 * 100; // 100MB max for sanity check
+            // Ensure the length is reasonable
+            if (length > maxChunkSize) {
+                console.error(`Chunk length of ${length} bytes is too large (type unknown at offset ${offset})`);
+                throw new Error("Chunk length exceeds reasonable limits");
+            }
+            // Read the chunk type (4 bytes)
+            const type = String.fromCharCode(
+                view.getUint8(offset + 4),
+                view.getUint8(offset + 5),
+                view.getUint8(offset + 6),
+                view.getUint8(offset + 7)
+            );
+            //console.log(`Processing chunk type: ${type}, length: ${length}, offset: ${offset}`);
+            // Ensure the length is within the buffer's bounds
+            if (offset + length + 12 > view.byteLength) {
+                //console.error(`Chunk length of ${length} bytes at offset ${offset} exceeds buffer size`);
+                throw new Error("Chunk length exceeds the buffer size");
+            }
+            // Read the chunk data (length bytes)
+            const data = new Uint8Array(arrayBuffer, offset + 8, length);
+            // Push the chunk into the chunks array
+            chunks.push({ type, data });
+            // Move to the next chunk (length + 12 bytes: 4 for length, 4 for type, and 4 for CRC)
+            offset += length + 12;
+            // Stop parsing after IEND chunk
+            if (type === 'IEND') {
+                //console.log("Reached IEND chunk. Stopping parsing.");
+                break;
+            }
+        }
+        return chunks;
+    }
+
+    function editMetadata(chunks, newMetadata) {
+        let metadataExists = false;
+        const _key = "parameters";
+        const updatedChunks = chunks.map(chunk => {
+            if (chunk.type === 'tEXt' || chunk.type === 'iTXt' || chunk.type === 'zTXt') {
+                const textDecoder = new TextDecoder();
+                const textContent = textDecoder.decode(chunk.data);
+                const [key, value] = textContent.split('\0');
+                if (key === _key) { 
+                    metadataExists = true;
+                    // Modify the chunk data with newMetadata
+                    const newKey = _key; 
+                    const newValue = newMetadata[newKey] || "";
+                    const newChunkData = new TextEncoder().encode(`${newKey}\0${newValue}`);
+                    return {
+                        ...chunk,
+                        data: newChunkData,
+                    };
+                }
+            }
+            return chunk;
+        });
+        if (!metadataExists) {
+            // If the metadata chunk doesn't exist, create a new one
+            const newKey = _key; 
+            const newValue = newMetadata[newKey] || "";
+            const newChunkData = new TextEncoder().encode(`${newKey}\0${newValue}`);
+            const newChunk = {
+                type: 'tEXt',
+                data: newChunkData,
+            };
+            // Insert the new metadata chunk before the IEND chunk
+            const iendIndex = updatedChunks.findIndex(chunk => chunk.type === 'IEND');
+            updatedChunks.splice(iendIndex, 0, newChunk);
+        }
+        return updatedChunks;
+    }    
+
+    function reconstructPNG(chunks) {
+        const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+        const buffers = [signature];
+        chunks.forEach(chunk => {
+            const length = new Uint8Array(4);
+            new DataView(length.buffer).setUint32(0, chunk.data.length);
+            const type = new TextEncoder().encode(chunk.type);
+            // Combine type and data for CRC calculation
+            const combined = new Uint8Array(type.length + chunk.data.length);
+            combined.set(type);
+            combined.set(chunk.data, type.length);
+            const crc = new Uint8Array(4);
+            new DataView(crc.buffer).setUint32(0, crc32(combined));
+            buffers.push(length, type, chunk.data, crc);
+        });
+        return new Blob(buffers, { type: 'image/png' });
+    }
+
+    function downloadPNG(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    //Convert image to PNG 
+    function replaceImageWithPNG() {
+      const img = previewImage;
+      const src = img.src;
+      // Check if the current image is already a PNG (base64 encoded)
+      if (src.startsWith('data:image/png;base64,')) return;  // Do nothing if it's already a PNG
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      // Create a temporary image object to draw onto the canvas
+      const tempImg = new Image();
+      tempImg.onload = function() {
+        // Set canvas dimensions to match the image
+        canvas.width = tempImg.width;
+        canvas.height = tempImg.height;
+        // Draw the image onto the canvas
+        ctx.drawImage(tempImg, 0, 0, tempImg.width, tempImg.height);
+        // Convert canvas to a data URL in PNG format
+        const dataURL = canvas.toDataURL('image/png');
+        // Replace the img element's src with the new PNG data URL
+        //img.src = dataURL;
+
+        const filename = imageFile.name.slice(0, imageFile.name.lastIndexOf('.')) + '.png';
+        // Convert the base64 data URL to a File object and store it globally
+        imageFile = dataURLToFile(dataURL, filename);
+      };
+      // Set the tempImg's src to the original image's src
+      tempImg.src = src;
+    }
+
+    // Function to convert a data URL to a File object
+    function dataURLToFile(dataURL, fileName) {
+      // Decode the base64 string to binary data
+      const byteString = atob(dataURL.split(',')[1]);
+      // Create an array of 8-bit unsigned integers
+      const arrayBuffer = new Uint8Array(byteString.length);
+      for (let i = 0; i < byteString.length; i++) {
+        arrayBuffer[i] = byteString.charCodeAt(i);
+      }
+      // Create a Blob from the array buffer
+      const blob = new Blob([arrayBuffer], { type: 'image/png' });
+      // Convert the Blob to a File object
+      return new File([blob], fileName, { type: 'image/png' });
+    }
+    //#endregion PNG Utilities    
+    //#region JPG Utilities
+    function checkExifUserComment(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const buffer = event.target.result;
+                const view = new DataView(buffer);
+                if (view.getUint16(0, false) !== 0xFFD8) { // Check if it's a valid JPEG
+                    reject(new Error("Not a valid JPEG file"));
+                    return;
+                }
+                let offset = 2;
+                let exifDataStart = null;
+                let isJFIF = false;
+                // Find EXIF or JFIF data block
+                while (offset < view.byteLength) {
+                    const marker = view.getUint16(offset, false);
+                    const markerLength = view.getUint16(offset + 2, false);
+                    if (marker === 0xFFE1 && view.getUint32(offset + 4, false) === 0x45786966) { // APP1 marker (EXIF), Exif header
+                        exifDataStart = offset + 4;
+                        break;
+                    }
+                    if (marker === 0xFFE0 && view.getUint32(offset + 4, false) === 0x4A464946) { // APP0 marker (JFIF), JFIF header
+                        isJFIF = true;
+                    }
+                    offset += 2 + markerLength;
+                }
+                if (exifDataStart === null && isJFIF) {
+                    const userComment = extractUserCommentFromJFIF(view, 2, buffer.byteLength);
+                    if (userComment) resolve(userComment);
+                    else reject(new Error("No User Comment found in JFIF data."));
+                } else if (exifDataStart !== null) {
+                    try {
+                        const userComment = findUserComment(view, exifDataStart, buffer.byteLength);
+                        if (userComment) resolve(userComment);
+                        else reject(new Error("No User Comment found in EXIF data."));
+                    } catch (e) {
+                        reject(new Error("Failed to read EXIF data: " + e.message));
+                    }
+                } else {
+                    reject(new Error("No EXIF or JFIF User Comment data found."));
+                }
+            };
+            reader.onerror = () => reject(new Error("Unable to read the file."));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function extractUserCommentFromJFIF(dataView, offset, totalLength) {
+        let userComment = '';
+        while (offset < totalLength) {
+            const marker = dataView.getUint16(offset, false);
+            const markerLength = dataView.getUint16(offset + 2, false);
+            if (marker === 0xFFFE || marker === 0xFFE1) { // Check for metadata block
+                const segmentStart = offset + 4;
+                const segmentLength = markerLength - 2;
+                userComment = readSegment(dataView, segmentStart, segmentLength + 8, totalLength); // Read extra bytes for safety
+                break;
+            }
+            offset += 2 + markerLength;
+        }
+        return userComment;
+    }
+
+    function findUserComment(dataView, start, totalLength) {
+        const tiffHeaderOffset = start + 6;
+        const littleEndian = dataView.getUint16(tiffHeaderOffset, false) === 0x4949;
+        const firstIFDOffset = dataView.getUint32(tiffHeaderOffset + 4, littleEndian);
+        let offset = firstIFDOffset + start + 2;
+        const entries = dataView.getUint16(start + firstIFDOffset, littleEndian);
+        for (let i = 0; i < entries; i++) {
+            const tag = dataView.getUint16(offset, littleEndian);
+            if (tag === 0x9286) { // User Comment tag
+                const dataOffset = dataView.getUint32(offset + 8, littleEndian) + 14;
+                const dataLength = dataView.getUint32(offset + 4, littleEndian) - 8;
+                const userComment = readSegment(dataView, start + dataOffset, dataLength, totalLength); // Read extra bytes for safety
+                return userComment;
+            }
+            offset += 12; // Move to the next IFD entry (each entry is 12 bytes)
+        }
+        return null; // User Comment not found
+    }
+
+    function readSegment(dataView, start, length, totalLength) {
+        if (start + length > totalLength) 
+            length = totalLength - start; // Adjust to avoid reading beyond buffer
+        const commentData = new Uint8Array(dataView.buffer, start, length);
+        let decodedComment = new TextDecoder("utf-16be").decode(commentData);
+        return decodedComment;
+    }
+    //#endregion JPG Utilities
+
+  </script>
+
+</body>
+</html>
