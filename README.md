@@ -13,4 +13,4 @@ https://xypher7.github.io/ai-image-metadata-editor
 - LoRA resource links to CivitAI.
 - Offline Execution. The tool is designed to be used offline and processing is entirely done on your browser.
 
-![App Screenshot](https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/38cb90ff-e28c-4cb9-93c3-fede200af127/original=true,quality=90/Screenshot%202024-09-28%20234715.jpeg)
+![App Screenshot](https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/5b30fbe1-bbce-4e83-9b99-bcf11aa71ceb/original=true,quality=90/Screenshot%202024-09-29%20001102.jpeg)
