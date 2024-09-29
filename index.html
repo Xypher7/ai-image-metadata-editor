@@ -427,7 +427,8 @@
       const objectURL = URL.createObjectURL(file);
       previewImage.src = objectURL;
       previewImage.style.display = 'block';
-      replaceImageWithPNG();
+      if(imageFile.type !== "image/png")
+        replaceImageWithPNG();
     }
 
     //Clear UI & Global Variables
@@ -462,6 +463,7 @@
           else 
             metadataPrompt.value += (metadataPrompt.value?'\n':'') + v;
         });
+      if(!metadataEditor.value) metadataEditor.value = paramsPrefix + '0';
       if(metadata.prompt) renderOther('ComfyUI Prompt', metadata.prompt);
       if(metadata.workflow) renderOther('ComfyUI Workflow', metadata.workflow);
       updateEditorFields();
@@ -679,6 +681,7 @@
               } 
               else if (['prompt','workflow'].includes(key)){
                 metadata[key] = value;
+                if(key === 'workflow') metadata.parameters = getComfyUIMetadata(value);
               }
           }
       });
@@ -690,7 +693,8 @@
       //Get JPG metadata and dump into array
       const userComment = await checkExifUserComment(file);
       if(!userComment) return [];
-      metadata.parameters = getAuto1111Metadata(userComment);//userComment.split(/\r?\n/).filter(Boolean);
+      if(userComment.startsWith('{')) metadata.prompt = userComment;
+      else metadata.parameters = getAuto1111Metadata(userComment);
       return metadata;
     }
 
@@ -722,6 +726,15 @@
       }catch{
         console.warn("Could not parse SwarmUI metadata...")
       }
+    }
+
+    function getComfyUIMetadata(metadataString){
+      const result = [];
+      for (const node of JSON.parse(metadataString).nodes) {
+        if (node.type === "CLIPTextEncode" && node.widgets_values && node.widgets_values.length > 0) 
+          result.push(node.widgets_values[0])
+      }
+      return result;
     }
 
     //Parse key/value pairs in metadata into a JSON object
@@ -987,44 +1000,85 @@
         }
         return chunks;
     }
+    
+    // function editMetadata(chunks, newMetadata) {
+    //     // Create a dictionary to store all existing key-value pairs from metadata chunks
+    //     const existingMetadata = {};
+    //     const metadataChunkTypes = ['tEXt', 'iTXt', 'zTXt'];
+    //     // Iterate through chunks to extract all existing key-value pairs from metadata chunks
+    //     const nonMetadataChunks = chunks.filter(chunk => {
+    //         if (metadataChunkTypes.includes(chunk.type)) {
+    //             const textDecoder = new TextDecoder();
+    //             const textContent = textDecoder.decode(chunk.data);
+    //             const [key, value] = textContent.split('\0'); // Split the chunk data into key and value
+    //             existingMetadata[key] = value; // Store the key-value pair in the existingMetadata dictionary
+    //             return false; // Return false to filter out metadata chunks since we'll recreate them
+    //         }
+    //         return true; // Preserve non-metadata chunks as-is
+    //     });
+    //     const finalMetadata = { ...existingMetadata, ...newMetadata }; // Merge existing metadata with new metadata to update/add keys without losing others
+    //     // Create new chunks for each key-value pair in the merged metadata dictionary
+    //     const newMetadataChunks = Object.entries(finalMetadata).map(([key, value]) => {
+    //         const newChunkData = new TextEncoder().encode(`${key}\0${value}`); // Encode the key-value pair into a new chunk data
+    //         // Create a new metadata chunk with the desired type (use 'tEXt' as default)
+    //         return {
+    //             type: 'tEXt', // Change to 'iTXt' or 'zTXt' if necessary based on use case
+    //             data: newChunkData,
+    //         };
+    //     });
+    //     const idatIndex = nonMetadataChunks.findIndex(chunk => chunk.type === 'IDAT'); // Find the index of the first IDAT chunk
+    //     nonMetadataChunks.splice(idatIndex, 0, ...newMetadataChunks); // Insert the new metadata chunks before the first IDAT chunk
+    //     return nonMetadataChunks;
+    // }
 
     function editMetadata(chunks, newMetadata) {
-        let metadataExists = false;
-        const _key = "parameters";
-        const updatedChunks = chunks.map(chunk => {
-            if (chunk.type === 'tEXt' || chunk.type === 'iTXt' || chunk.type === 'zTXt') {
-                const textDecoder = new TextDecoder();
-                const textContent = textDecoder.decode(chunk.data);
-                const [key, value] = textContent.split('\0');
-                if (key === _key) { 
-                    metadataExists = true;
-                    // Modify the chunk data with newMetadata
-                    const newKey = _key; 
-                    const newValue = newMetadata[newKey] || "";
-                    const newChunkData = new TextEncoder().encode(`${newKey}\0${newValue}`);
-                    return {
-                        ...chunk,
-                        data: newChunkData,
-                    };
-                }
-            }
-            return chunk;
-        });
-        if (!metadataExists) {
-            // If the metadata chunk doesn't exist, create a new one
-            const newKey = _key; 
-            const newValue = newMetadata[newKey] || "";
-            const newChunkData = new TextEncoder().encode(`${newKey}\0${newValue}`);
-            const newChunk = {
-                type: 'tEXt',
-                data: newChunkData,
-            };
-            // Insert the new metadata chunk before the IEND chunk
-            const iendIndex = updatedChunks.findIndex(chunk => chunk.type === 'IEND');
-            updatedChunks.splice(iendIndex, 0, newChunk);
-        }
-        return updatedChunks;
-    }    
+      // Create a dictionary to store all existing key-value pairs from metadata chunks
+      const existingMetadata = {};
+      const metadataChunkTypes = ['tEXt', 'iTXt', 'zTXt'];
+
+      // Iterate through chunks to extract all existing key-value pairs from metadata chunks
+      const nonMetadataChunks = chunks.filter(chunk => {
+          if (metadataChunkTypes.includes(chunk.type)) {
+              const textDecoder = new TextDecoder();
+              const textContent = textDecoder.decode(chunk.data);
+              const [key, value] = textContent.split('\0'); // Split the chunk data into key and value
+              existingMetadata[key] = value; // Store the key-value pair in the existingMetadata dictionary
+              return false; // Return false to filter out metadata chunks since we'll recreate them
+          }
+          return true; // Preserve non-metadata chunks as-is
+      });
+
+      // Remove the "workflow" and "prompt" keys if they exist
+      const keysToRemove = ["workflow", "prompt"];
+      keysToRemove.forEach(key => {
+          if (existingMetadata.hasOwnProperty(key)) {
+              console.log(`Removing '${key}' key from metadata.`);
+              delete existingMetadata[key];
+          }
+      });
+
+      // Merge existing metadata with new metadata to update/add keys without losing others
+      const finalMetadata = { ...existingMetadata, ...newMetadata };
+
+      // Create new chunks for each key-value pair in the merged metadata dictionary
+      const newMetadataChunks = Object.entries(finalMetadata).map(([key, value]) => {
+          const newChunkData = new TextEncoder().encode(`${key}\0${value}`); // Encode the key-value pair into a new chunk data
+          // Create a new metadata chunk with the desired type (use 'tEXt' as default)
+          return {
+              type: 'tEXt', // Change to 'iTXt' or 'zTXt' if necessary based on use case
+              data: newChunkData,
+          };
+      });
+
+      // Find the index of the first IDAT chunk
+      const idatIndex = nonMetadataChunks.findIndex(chunk => chunk.type === 'IDAT');
+      
+      // Insert the new metadata chunks before the first IDAT chunk
+      nonMetadataChunks.splice(idatIndex, 0, ...newMetadataChunks);
+
+      return nonMetadataChunks;
+  }
+
 
     function reconstructPNG(chunks) {
         const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -1074,7 +1128,6 @@
         const dataURL = canvas.toDataURL('image/png');
         // Replace the img element's src with the new PNG data URL
         //img.src = dataURL;
-
         const filename = imageFile.name.slice(0, imageFile.name.lastIndexOf('.')) + '.png';
         // Convert the base64 data URL to a File object and store it globally
         imageFile = dataURLToFile(dataURL, filename);
