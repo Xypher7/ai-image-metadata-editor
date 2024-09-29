@@ -36,13 +36,16 @@
     .svg-icon-lg { width: 3em; height: 3em;}
     .svg-icon path, .svg-icon polygon, .svg-icon rect { fill: var(--vltheme); }
     .svg-icon circle { stroke: var(--vltheme); stroke-width: 1; }
+    .summary-table table { width: 100%; }
     .summary-table td { border-bottom: 1px solid var(--theme); width: 100%; }
-    .summary-table tr td:first-child, .key { font-weight: bold; width: auto; white-space: nowrap; padding-right: 20px; }
+    .summary-table tr td:first-child, .key { font-weight: bold; width: fit-content; white-space: nowrap; }
+    .summary-table tr td:nth-child(2) { width: fit-content; white-space: nowrap; padding-right: 20px;; }
     .section-header { font-size: 1.2em; font-weight: bold;}
     .notes { font-style: italic; font-size: 0.8em; }
     .main-container div { margin: 5px;}
     .main-container div:first-child { flex:1; }
     .main-container div:nth-child(2) { flex:2; }
+    .delete-row-btn { color: var(--error); text-decoration: none; font-size: 1em; font-weight: bold; }
     doro-doro { position: absolute; margin: -15px 0 0 10px; }
   </style>
 </head>
@@ -55,7 +58,7 @@
   <hr/>
 
   <span id="settings-btn" class="collapsible boom" data-target="settings-panel">⚙</span>
-  <div id="settings-panel">
+  <div id="settings-panel" style="display: none;">
     <div class="section-header boom">Display Settings</div>
     <div><input type="checkbox" id="darkMode" class="settings-field" checked><label for="darkMode">Dark Mode</label></div>
     <hr>
@@ -125,8 +128,9 @@
           <div class="summary-table" data-toggle-target="editorFormat" data-toggle-value="simple">
             <table>
               <tbody id="metadataEditorSimple">
-                <tr><td><label for="editor_Steps">Steps: </label></td><td><input type="number" id="editor_Steps" name="Steps" min="0"></td></tr>
+                <tr><td></td><td><label for="editor_Steps">Steps: </label></td><td><input type="number" id="editor_Steps" name="Steps" min="0"></td></tr>
                 <tr>
+                  <td></td>
                   <td><label for="editor_Sampler">Sampler: </label></td>
                   <td>
                     <input type="text" id="editor_Sampler" name="Sampler"  list="samplers">
@@ -160,13 +164,18 @@
                     </datalist>
                   </td>
                 </tr>
-                <tr><td><label for="editor_CFG_scale">CFG scale: </label></td><td><input type="number" id="editor_CFG_scale" name="CFG scale" step="1" min="0"></td></tr>
-                <tr><td><label for="editor_Seed">Seed: </label></td><td><input type="number" id="editor_Seed" name="Seed" step="1" min="0"></td></tr>
-                <tr><td><label for="editor_Model_hash">Model hash: </label></td><td><input type="text" id="editor_Model_hash" name="Model hash"></td></tr>
+                <tr><td></td><td><label for="editor_CFG_scale">CFG scale: </label></td><td><input type="number" id="editor_CFG_scale" name="CFG scale" step="1" min="0"></td></tr>
+                <tr><td></td><td><label for="editor_Seed">Seed: </label></td><td><input type="number" id="editor_Seed" name="Seed" step="1" min="0"></td></tr>
+                <tr><td></td><td><label for="editor_Model_hash">Model hash: </label></td><td><input type="text" id="editor_Model_hash" name="Model hash"></td></tr>
               </tbody>
             </table>
           </div>
           <div id="summaryTable" data-toggle-target="summaryFormat" data-toggle-value="table" class="summary-table">No data to display...</div>
+        </div>
+        <hr>
+        <div>
+          <span class="section-header collapsible collapsible-caret" data-target="metadataOtherContainer">Other</span>
+          <div id="metadataOtherContainer"><hr><div id="metadataOther">No data to display...</div></div>
         </div>
         
       </div>
@@ -310,8 +319,8 @@
       }
       if(file.name.endsWith('.png')){
         displayPreviewImage(file);
-        const parameters = await getPNGMetadata(file);
-        displayMetadata(parameters);
+        const metadata = await getPNGMetadata(file);
+        displayMetadata(metadata);
       }
       else if(file.name.endsWith('.safetensors')){
         addLora(file);
@@ -319,8 +328,8 @@
       else {
         displayPreviewImage(file);
         if((/\.(jpg|jpeg)$/i.test(file.name))) {
-          const parameters = await getJPGMetadata(file);
-          displayMetadata(parameters);
+          const metadata = await getJPGMetadata(file);
+          displayMetadata(metadata);
         }
       }
     }
@@ -430,28 +439,38 @@
       metadataNegative.value = "";
       metadataEditor.value = "";
       summaryTable.innerHTML = "";
+      metadataOther.innerHTML = "";
       imageFile = null;
       metadataEditorFields.forEach(input => input.value = '');
     }
 
     //Load image metadata into the UI
-    async function displayMetadata(parameters) {
+    async function displayMetadata(metadata) {
       //Skip if metadata not selected in load selection
       if(!['all','metadata'].includes(loadMode.value)) return;
       metadataPrompt.value = "";
       metadataNegative.value = "";
       metadataEditor.value = "";
+      metadataOther.innerHTML = "";
       //Fill textareas with metadata sections
-      parameters.forEach((v,i)=> {
-        if(v.startsWith(paramsPrefix) ) 
-          metadataEditor.value = v;
-        else if(v.startsWith(negativePrefix)) 
-          metadataNegative.value = v.substring(negativePrefix.length);
-        else 
-          metadataPrompt.value += v;
-      });
+      if(metadata.parameters)
+        metadata.parameters.forEach((v,i)=> {
+          if(v.startsWith(paramsPrefix) ) 
+            metadataEditor.value = v;
+          else if(v.startsWith(negativePrefix)) 
+            metadataNegative.value = v.substring(negativePrefix.length);
+          else 
+            metadataPrompt.value += (metadataPrompt.value?'\n':'') + v;
+        });
+      if(metadata.prompt) renderOther('ComfyUI Prompt', metadata.prompt);
+      if(metadata.workflow) renderOther('ComfyUI Workflow', metadata.workflow);
       updateEditorFields();
       renderSummary();
+    }
+
+    function renderOther(key, value){
+      metadataOther.innerHTML += `<div class='key'>${key}</div><hr>`;
+      metadataOther.innerHTML += `<div>${value}</div><hr>`;
     }
 
     //Render image metadata in table format
@@ -461,20 +480,24 @@
         let formattedValue = "";
         if(key==='Lora hashes'){
           if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-          value.split(',').forEach(kv => {
-            const v = kv.split.length===2 ? kv.split(":")[1].trim() : null;
-            if(v)
-              formattedValue += `<div><a href='#' onclick='redirectToModel("${v}"); return false;'>${kv}</a></div>`;
-          });
+          if(value)
+            value.split(',').forEach(kv => {
+              const k = kv.split.length===2 ? kv.split(":")[0].trim() : null;
+              const v = kv.split.length===2 ? kv.split(":")[1].trim() : null;
+              if(v)
+                formattedValue += `<div><a href='#' onclick='redirectToModel("${v}"); return false;'>${kv}</a><a href='#' class='delete-row-btn' onclick='removeLora("${k}","${v}"); return false;'> ❌</a></div>`;
+            });
         } else if(['Model hash','VAE hash'].includes(key) && value){
           formattedValue += `<div><a href='#' onclick='redirectToModel("${value}"); return false;'>${value}</a></div>`;
         } else{
           const dataType = value === null || value === undefined || value === "undefined" ? "null" : typeof value;
           formattedValue = dataType === 'object' ? `<pre>${JSON.stringify(value, null, 2)}</pre>` : value;
         }
-        return `<tr><td>${key}</td><td>${formattedValue}</td></tr>`;
+        const delBtn = key !== 'Steps' ? `<a href='#' class='delete-row-btn' onclick='deleteKeyValue("${key}"); return false;'> ❌</a>`:'&nbsp;';
+        return `<tr><td>${delBtn}</td><td> ${key}</td><td>${formattedValue}</td></tr>`;
       });
       summaryTable.innerHTML = `<table>${rows.join('')}</table>`;
+      updateEditorFields();
     }
 
     //Add lora info from Safetensors file to image param metadata
@@ -510,6 +533,13 @@
       }
     }
 
+    function removeLora(key, value) {
+      metadataEditor.value = removeKeyValueFromLoraHashes(metadataEditor.value, key, value);
+      if(!getValueFromKey(metadataEditor.value, 'Lora hashes').replace(new RegExp('"', 'g'),'')) 
+        metadataEditor.value = deleteKeyValueInString(metadataEditor.value, 'Lora hashes');
+      renderSummary();
+    }
+
     function appendKeyValueToLoraHashes(input, newKey, newValue) {
         const regex = /Lora hashes:\s*"([^"]*)"/;
         const match = input.match(regex);
@@ -520,6 +550,24 @@
             const newLoraHashSection = `Lora hashes: "${newKey}: ${newValue}"`;
             return `${input}, ${newLoraHashSection}`; // Append the new Lora hashes section
         }
+    }
+
+    function removeKeyValueFromLoraHashes(input, keyToRemove, valueToRemove) {
+      const regex = /Lora hashes:\s*"([^"]*)"/;
+      const match = input.match(regex);
+      if (match) {
+        // Split existing hashes into an array and filter out the key-value pair to remove
+        const filteredHashes = match[1]
+          .split(',')
+          .map(pair => pair.trim())
+          .filter(pair => pair !== `${keyToRemove}: ${valueToRemove}`)
+          .join(', ');
+        // Replace the original Lora hashes with the filtered result
+        return input.replace(match[1], filteredHashes);
+      } else {
+        // If no Lora hashes section is found, just return the input as is
+        return input;
+      }
     }
 
     function getValueFromKey(input, key) {
@@ -537,6 +585,73 @@
         return input;
     }
 
+    function deleteKeyValueInString(input, key) {
+        const regex = new RegExp(`,?\\s*${key}\\s*:\\s*[^,]+`);
+        if (!input?.trim()) return input;
+        input = input.replace(regex, '');
+        // Clean up any leftover leading or trailing commas and spaces
+        input = input.replace(/^\s*,\s*|\s*,\s*$/g, '').trim();
+        return input;
+    }
+
+    function deleteKeyValue(key) {
+      let input = metadataEditor.value;
+      if (!input?.trim()) return;
+      const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escape special characters in the key for use in regular expressions
+      const regex = new RegExp(`,?\\s*"?${escapedKey}"?\\s*:\\s*`); // Create a regular expression to find the start of the key-value pair
+      const match = input.match(regex); // Find the position of the key in the input
+      if (!match) return;
+      const startIndex = match.index; // Get the starting index of the key-value pair
+      const endIndex = findEndIndexOfValue(input, startIndex + match[0].length); // Find the end index of the value (handling nested structures)
+      const beforeKey = input.slice(0, startIndex);
+      const afterKey = input.slice(endIndex);
+      input = (beforeKey + afterKey).replace(/^\s*,\s*|\s*,\s*$/g, '').trim();
+      input = input // Clean up leftover commas, braces, and spaces after removal
+        .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas before closing braces
+        .replace(/([{\[])\s*,/g, '$1') // Remove leading commas after opening braces
+        .replace(/({\s*})/g, '') // Remove empty curly braces if left
+        .replace(/(\[\s*\])/g, '') // Remove empty square brackets if left
+        .trim();
+      metadataEditor.value = input; // Assign the cleaned value back to metadataEditor
+      renderSummary();
+    }
+
+    // Helper function to find the end index of a value, handling nested structures
+    function findEndIndexOfValue(str, startIndex) {
+      let index = startIndex;
+      let braceCount = 0;
+      let bracketCount = 0;
+      let inQuotes = false;
+
+      while (index < str.length) {
+        const char = str[index];
+        // Toggle inQuotes when encountering a non-escaped quote
+        if (char === '"' && str[index - 1] !== '\\') {
+          inQuotes = !inQuotes;
+        }
+        // If inside quotes, skip further checks
+        if (inQuotes) {
+          index++;
+          continue;
+        }
+        // Count nested braces and brackets
+        if (char === '{') braceCount++;
+        if (char === '}') braceCount--;
+        if (char === '[') bracketCount++;
+        if (char === ']') bracketCount--;
+        // If we reach a comma and not inside any nested structure, end the value
+        if (char === ',' && braceCount === 0 && bracketCount === 0) {
+          break;
+        }
+        // If we reach the end of an object or array, stop
+        if (braceCount < 0 || bracketCount < 0) {
+          break;
+        }
+        index++;
+      }
+      return index;
+    }
+
     //Render fields for simple Param editor
     function updateEditorFields() {
       if(editorFormat.value!=='simple') return;
@@ -549,29 +664,50 @@
       //Get PNG metadata and dump into array
       const arrayBuffer = await readPNGFile(file);
       let dataChunks = parseChunks(arrayBuffer);
-      let parameters = [];
+      const metadata = {};
       dataChunks.forEach(chunk => {
           if (chunk.type === 'tEXt' || chunk.type === 'iTXt' || chunk.type === 'zTXt') {
               const text = new TextDecoder().decode(chunk.data);
-              const [key, value] = text.split('\0');
+              const [key, value] = text.split('\0').filter(Boolean);
               if (key === "parameters") {
                 if(value.startsWith("{") && value.includes('sui_image_params')){ //SwarmUI metadata
-                  parameters = getSwarmUIMetadata(value);
-                } else //Auto1111 metadata
-                  parameters = value.split(/\r?\n/).filter(Boolean);
+                  metadata[key] = getSwarmUIMetadata(value);
+                } else { //Auto1111 metadata
+                  metadata[key] = getAuto1111Metadata(value);
+                }
                 return;
               } 
+              else if (['prompt','workflow'].includes(key)){
+                metadata[key] = value;
+              }
           }
       });
-      return parameters;
+      return metadata;
     }
 
     async function getJPGMetadata(file) {
+      const metadata = {};
       //Get JPG metadata and dump into array
       const userComment = await checkExifUserComment(file);
       if(!userComment) return [];
-      const parameters = userComment.split(/\r?\n/).filter(Boolean);
-      return parameters;
+      metadata.parameters = getAuto1111Metadata(userComment);//userComment.split(/\r?\n/).filter(Boolean);
+      return metadata;
+    }
+
+    function getAuto1111Metadata(metadataString){
+      const substrings = [negativePrefix, paramsPrefix];
+      const regex = new RegExp(`(${substrings.join('|')})`, 'g');
+      const parts = metadataString.split(regex);
+      const result = [];
+      for (let i = 0; i < parts.length; i++) {
+        if (substrings.includes(parts[i])) {
+          result.push((parts[i] + (parts[i + 1] || '')).trim());// Combine substring with the subsequent text
+          i++; // Skip the next part since it's already included
+        } else if (parts[i].trim()) { // Push text before any matching substring
+          result.push(parts[i].trim());
+        }
+      }
+      return result;
     }
 
     function getSwarmUIMetadata(metadataString){
