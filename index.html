@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>AI Image Metadata Editor</title>
+  <meta charset="UTF-8">
   <link id="favicon" rel="icon" type="image/x-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAL0SURBVDhPtZNfSFNRHMe/2929m9t1Tudymumcc1bWQyZCSpaBCWIqgnspfcmHgh6ioKfsobeEXnpIg+ghAtGyByNB9MF/EJkPKigT1Dmnc+7un/u/u7vd7l0mVERPfeBw+B3O98v5nt85+G88uN2rECbqR/V3JEdzhtZLV9V3my03k7FIQ05untnqdiRoktyNBgPT5lJzwaJ9k3P43KMvht+sHUl+MaBXB8feIZls94cCoBUqYUkCnU4Lf8AHVZYKm24n9mN+2+Sn91feLn1ziKJjg8WXH57p9UWP1CkJVCoVJIQMiXAUnlQMNAgsWVfgCoew6Xcir8rwWl9W+rSzvcMhFcVjT55fK9bk35OlgUgsBgkvQYJN4MDDgEzxkKR56DUFMOYVgoiSKCmv6KWVygZRK73V0XOhrNA0mEVQSsa9j9XADoJeH0KMD242iHSSBZ9MQSGXY2F9BzYmjnAwDp/Pny0aECvW5cid613VlEJ2/quPwQGnhffAhiAbwqzXhi2vE+W5BciSkSAVJAiTHgZzETguaQyHwxOEYML21LfUqIz05ZLyk5BSOpiaz+LExQq49hRCJDXOaeWg0lKw8jQK68woNZxCpblSR1Ikm7kDz+HheiKSRFFuFmrrteCRgpySo7HBjGqDGjkyJXYDXtB1Z6DWqCGTyZCdTUOr1RoyBmtu+yTHcLblhS24QuFMXjYhZE/7QdAhMFE/FPUmGKoqYSwrE1qrQ5LjIETwiBEwtfwlVJpfvEWZCtqKTUYqX9ggtlKZp0UoGkE6m0RlXS3A87BardBoNLDb7Z6+vr6Hov6Ymbm5zxsbG/zU1JRvz7kX5ziOPwwc8rF4nHe5XNz4+Pj8xMTELsuy/MfR0QFRk4nwk/nZ+QGGYfxDQ0P3b7S2dm5vb8fUOWo4dnacnZ2WtpaWliaeT8/GhLciJaTkkewPzMIQPxIGB189Fo7Kz8xMLwplJm6XxXJ6eGR4pL//WZNY/xOLxdLY3d1dc1T+BvAd/0w7pD7OdiEAAAAASUVORK5CYII=">
   <style>
     :root { --link:#4dabf7; --error:#dc3545; --databg:#1A1B26; --datatxt:#c1c5c1; --string:#9ece6a; --key:#bb9af7; --number:#ff9e64; --boolean:#61aeee; --null:#e06c75;}
@@ -17,7 +18,7 @@
     .collapsible-caret.active::before { content: "▲ "; }
     .content { display: none; padding: 5px; position: relative; }
     .header, #settings-btn { margin:20px; font-size: 2em; font-weight: bold; }
-    #settings-panel { padding: 10px; border-bottom: 1px solid var(--theme); }
+    #settings-panel { padding: 10px; border: 1px solid var(--theme); border-radius: 20px; margin: 10px; }
     #settings-btn { position: absolute; top: 0; right: 0; }
     .footer { margin:10px; text-align: center; font-size: 0.9em; }
     #notificationPanel { text-align: center; color:var(--error); font-weight: bold; }
@@ -25,13 +26,12 @@
     input, textarea, select { font-family: monospace; color: var(--vltheme); background-color: var(--ltheme); border-radius: 10px;  }
     input { padding:5px; }
     textarea { width: 100%; }
-    select { font-size: 1.3em; padding: 5px;}
+    select, input.settings-field { font-size: 1.3em; padding: 5px;}
     hr { border: none; border-bottom: 1px solid var(--theme); }
     input[type=checkbox] { margin: 10px;}
     pre { margin: 0; }
     button { font-size: 1.1em; color: var(--vltheme); background-color: var(--ltheme); border: none; border-radius: 10px; padding:8px; }
     button:hover { background-color: var(--theme); }
-    /* https://svgicons.sparkk.fr */
     .svg-icon { width: 1em; height: 1em;}
     .svg-icon-lg { width: 3em; height: 3em;}
     .svg-icon path, .svg-icon polygon, .svg-icon rect { fill: var(--vltheme); }
@@ -46,6 +46,12 @@
     .main-container div:first-child { flex:1; }
     .main-container div:nth-child(2) { flex:2; }
     .delete-row-btn { color: var(--error); text-decoration: none; font-size: 1em; font-weight: bold; }
+    #loading { display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; color: #ffffff; background: rgba(0, 0, 0, 0.7); padding: 20px; border-radius: 10px; z-index: 1000; }
+    #loading .spinner { margin: 10px auto; border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 4px solid #ffffff; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .progress-container { width: 100%; height: 30px; background-color: #f3f3f3; border: 1px solid #ccc; border-radius: 5px; position: relative; margin: 20px 0; text-align: center; }
+    .progress-bar { height: 100%; width: 0;  background-color: #4caf50; border-radius: 5px; position: absolute; top: 0; left: 0;  transition: width 0.2s ease-in-out; }
+    .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; color: black; z-index: 2; }
     doro-doro { position: absolute; margin: -15px 0 0 10px; }
   </style>
 </head>
@@ -62,10 +68,10 @@
     <div class="section-header boom">Display Settings</div>
     <div><input type="checkbox" id="darkMode" class="settings-field" checked><label for="darkMode">Dark Mode</label></div>
     <hr>
-    <div class="section-header boom">LoRA Settings</div>
+    <div class="section-header boom">Safetensors Settings</div>
     <div><input type="checkbox" id="appendLoraToPrompt" class="settings-field" checked><label for="appendLoraToPrompt">Append LoRA to prompt</label></div>
     <div>
-      <label for="hashMethod">Safetensors hashing method: </label>
+      <label for="hashMethod">LoRA hashing method: </label>
       <select id="hashMethod" class="settings-field">
         <option value="metadata" selected>Retrieve AutoV3 hash from Metadata</option>
         <option value="autov3">Calculate AutoV3 hash</option>
@@ -187,7 +193,18 @@
     <a href="https://github.com/Xypher7/ai-image-metadata-editor" target='_blank'>GitHub</a> <span class="boom">|</span>
     <a href="https://civitai.com/models/661484" target='_blank'>CivitAI</a>
   </div>
+  <!-- Loading Animation Div -->
+  <div id="loading">
+    <div>Processing...</div>
+    <div class="spinner"></div>
+    <div class="progress-container">
+      <div class="progress-bar"></div>
+      <div class="progress-text">0%</div> <!-- Text placed as a sibling to the progress-bar -->
+    </div>
+  </div>
   <script src="https://xypher7.github.io/Doro.js/doro.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hash-wasm@4/dist/sha256.umd.min.js"></script>
+
   <script> 
     //#region Gobal Variables
     let imageFile;
@@ -210,9 +227,15 @@
     const clearSettingsBtn = document.getElementById('clearSettingsBtn');
     const summaryTable = document.getElementById('summaryTable');
     const editorFormat = document.getElementById('editorFormat');
+
+    const loading =document.getElementById('loading');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.querySelector('.progress-text');
     
     const negativePrefix = 'Negative prompt: ';
     const paramsPrefix = 'Steps: ';
+
+    let progressInterval;
 
     //#endregion Global Variables
     //#region Initialization 
@@ -298,7 +321,7 @@
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
       fileInput.style.display = 'none';
-      fileInput.accept = '.png,.jpg,.jpeg,bmp,.webp,.safetensors';
+      fileInput.accept = '.png,.jpg,.jpeg,bmp,.webp,.safetensors,.gguf';
       document.body.appendChild(fileInput);
 
       dropArea.addEventListener('click', () => {
@@ -313,7 +336,7 @@
 
     async function handleFile(file) {
       notificationPanel.innerHTML = '';
-      if(!file || !(/\.(png|jpg|jpeg|bmp|webp|safetensors)$/i.test(file.name))){
+      if(!file || !(/\.(png|jpg|jpeg|bmp|webp|safetensors|gguf)$/i.test(file.name))){
         notificationPanel.innerHTML = 'Please drop a valid image or safetensors file.';
         return;
       }
@@ -322,8 +345,18 @@
         const metadata = await getPNGMetadata(file);
         displayMetadata(metadata);
       }
-      else if(file.name.endsWith('.safetensors')){
-        addLora(file);
+      else if(file.name.endsWith('.safetensors') || file.name.endsWith('.gguf')){
+        showLoading();
+        const TWO_GB = 2 * 1024 * 1024 * 1024;
+        try{
+          if (file.size > TWO_GB) await addCheckpoint(file)
+          else await addLora(file);
+        } catch (error ){
+            notificationPanel.innerHTML = `Could not calculate hash...`;
+            console.error(error);
+        } finally {
+            hideLoading();
+        }
       }
       else {
         displayPreviewImage(file);
@@ -334,10 +367,53 @@
       }
     }
 
+    async function addCheckpoint(file) {
+      const hash = await calculateHashInChunks(file);
+      if(hash) { 
+        notificationPanel.innerHTML = '';
+        metadataEditor.value = updateKeyValueInString(metadataEditor.value, 'Model hash', hash.substring(0,10));
+        metadataEditor.value = updateKeyValueInString(metadataEditor.value, 'Model', file.name.replace('.safetensors',''));
+        renderSummary();
+      } else {
+        //notificationPanel.innerHTML = `Could not calculate the hash...`;
+      }
+    }
+
+    async function calculateHashInChunks(file) {
+        const chunkSize = 16 * 1024 * 1024;  // 16 MB chunk size
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+
+        // Initialize the hash-wasm SHA-256 hasher
+        const sha256 = await hashwasm.createSHA256();
+
+        let chunksProcessed = 0;
+
+        // Read and process each chunk
+        for (let i = 0; i < totalChunks; i++) {
+            const chunk = file.slice(i * chunkSize, (i + 1) * chunkSize);
+            const chunkArrayBuffer = await chunk.arrayBuffer();
+
+            // Update the hash with the current chunk data
+            sha256.update(new Uint8Array(chunkArrayBuffer));
+
+            // Update and display the progress
+            chunksProcessed++;
+            const progress = Math.round((chunksProcessed / totalChunks) * 100);
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${progress}%`;
+        }
+
+        // Finalize and get the hash as a hex string
+        const finalHashHex = sha256.digest('hex');
+        return finalHashHex;  // Return the final hash as a hex string
+    }
+
     //Initialize Settings with values stored in browser
     function initSettingsStorage(){
       // Unique prefix for the app
-      const appPrefix = 'x_aiie.'; 
+      const appPrefix = 'x_aiime.'; 
 
       // Retrieve values from local storage and set default values if not present
       const loadSettings = () => {
@@ -417,6 +493,15 @@
     //Toggle UI between dark and light modes
     function toggleDarkMode(){
       document.body.classList.toggle('dark-theme');
+    }
+
+    function showLoading() {
+      loading.style.display = 'block';
+    }
+
+    // Function to hide the loading animation
+    function hideLoading() {
+      loading.style.display = 'none';
     }
 
     //Render preview image in UI
@@ -529,9 +614,9 @@
         metadataEditor.value = appendKeyValueToLoraHashes(metadataEditor.value, loraName, fileHash);
         renderSummary();
       }
-      catch {
+      catch(e) {
         notificationPanel.innerHTML = 'An error occured while retrieving the hash...';
-        console.error(error);
+        console.error(e);
       }
     }
 
