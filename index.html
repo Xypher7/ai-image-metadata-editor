@@ -346,7 +346,7 @@
       <div class="progress-text">0%</div>
     </div>
   </div>
-  <script src="https://xypher7.github.io/Doro.js/doro.js"></script>
+  <!-- <script src="https://xypher7.github.io/Doro.js/doro.js"></script> --> 
   <script src="https://cdn.jsdelivr.net/npm/hash-wasm@4/dist/sha256.umd.min.js"></script>
 
   <script>
@@ -455,6 +455,7 @@
             });
             this.updateTheme();
             document.head.insertAdjacentHTML('beforeend', `<style>.doro-theme *{cursor:url("${UI.favicon.href}") 4 4,auto;}</style>`);
+            window.addEventListener("load", () => document.body.appendChild(Object.assign(document.createElement("script"), {src:"https://xypher7.github.io/Doro.js/doro.js"})));
           },
 
           initSelectToggle() {
