@@ -373,10 +373,12 @@
           { name:'CivitAI', pngFields: ['parameters'], jpgFields: ['user_comment'], regex: /(C|c)ivitai/ },
           { name:'DAVANT', pngFields: ['parameters', 'davant__batch_parameters'],  regex: /(S|s)teps:/, verifyFields:true },
           { name:'DrawThings', pngFields: ['description', 'usercomment', 'creatortool'],  regex: /(S|s)teps:/, isXmp: true },
-          { name:'Fooocus', pngFields: ['parameters', 'fooocus_scheme'], jpgFields: ['user_comment'], regex: /Fooocus/, },
+          { name:'Fooocus', pngFields: ['parameters', 'fooocus_scheme'], jpgFields: ['user_comment'], regex: /(?<!Ruined)Fooocus/, },
+          { name:'RuinedFooocus', pngFields: ['parameters'], jpgFields: ['user_comment'], regex: /RuinedFooocus/, isJson: true, },
           { name:'InvokeAI', pngFields: ['invokeai_metadata', 'invokeai_graph'] },
           { name:'Midjourney', pngFields: ['description'], regex:/^(?=.*--(?:ar|v|q|quality|style|chaos|seed|stop)\b)[\s\S]+$/i },
           { name:'NovelAI', pngFields: ['comment', 'description', 'title', 'software', 'source'], isJson:true  },
+          { name:'SDNext', pngFields: ['parameters'], jpgFields: ['user_comment'], regex: /SD\.Next/ },
           { name:'SwarmUI', pngFields: ['parameters'], jpgFields: ['user_comment'], regex: /sui_image_params/, isJson: true },
           { name:'A1111', pngFields: ['usercomment'], regex: /(S|s)teps:/, isJson: false },
           { name:'A1111', pngFields: ['parameters'], jpgFields: ['user_comment'], webpFields: ['user_comment'], regex: /(S|s)teps:/, isJson: false },
@@ -1508,17 +1510,17 @@
               const md = ImageMetadataUtils.parseJSON(metadataString);
               const [width, height] = md.resolution?.match(/\d+/g) || [];
               const metadata = new ImageMetadataUtils.Models.NormalizedMetadata({
-                prompt: md.prompt ?? md.full_prompt?.join('\n'),
-                negative: md.full_negative_prompt,
+                prompt: md.prompt ?? md.Prompt ?? md.full_prompt?.join('\n'),
+                negative: md.negative ?? md.Negative ?? md.full_negative_prompt,
                 steps: md.steps,
-                sampler: md.sampler,
+                sampler: md.sampler ?? md.sampler_name,
                 scheduler: md.scheduler,
-                cfgScale: md.guidance_scale,
+                cfgScale: md.cfg ?? md.guidance_scale,
                 seed: md.seed,
-                width,
-                height,
-                modelHash: md.model?.hash?.split(':')?.[1],
-                model: md.model?.name,
+                width: md.width ?? width,
+                height: md.height ?? height,
+                modelHash: md.model?.hash?.split(':')?.[1] ?? md.base_model_hash,
+                model: md.model?.name ?? md.base_model_name,
                 vae: md.vae?.name,
                 loras: md.loras?.map(([name, cfg, hash]) => ({ name, cfg, hash })),
               });
@@ -1526,6 +1528,15 @@
             } catch(e) {
               console.warn("Could not parse Fooocus metadata...", e);
             }
+          },
+
+          getRuinedFooocusMetadata(metadataString, allMetadata = null) {
+            const md = ImageMetadataUtils.parseJSON(metadataString);
+            const fmd = ImageMetadataUtils.getFooocusMetadata(metadataString, allMetadata);
+            if(md.loras?.length) {
+              fmd.loras = md.loras?.map(([hash, name]) => ({ hash, name }));
+            } 
+            return fmd;
           },
 
           getInvokeAIMetadata(metadataString, allMetadata = null) {
